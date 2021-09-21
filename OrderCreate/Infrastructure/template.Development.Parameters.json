@@ -1,0 +1,75 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "value": "Development"
+    },
+    "keyVaultName": {
+      "value": "Dev-Ecomm-KV"
+    },
+    "applicationInsightsName": {
+      "value": "Dev-Ecomm-AppIns"
+    },
+    "storageName": {
+      "value": "devorderssubodstorage"
+    },
+    "workspaceName": {
+      "value": "Tst-ThreatDection-LogA"
+    },
+    "workspaceResourceGroup": {
+      "value": "Tst-ThreatDection-RG"
+    },
+    "LoggingEndpoint:Host": {
+      "value": "sweet-swan.rmq.cloudamqp.com"
+    },
+    "LoggingEndpoint:VirtualHost": {
+      "value": "dev"
+    },
+    "LoggingEndpoint:Port": {
+      "value": "5672"
+    },
+    "LoggingEndpoint:Username": {
+      "value": "@Microsoft.KeyVault(SecretUri=https://dev-ecomm-kv.vault.azure.net/secrets/LoggingEndpoint--Username)"
+    },
+    "LoggingEndpoint:Password": {
+      "value": "@Microsoft.KeyVault(SecretUri=https://dev-ecomm-kv.vault.azure.net/secrets/LoggingEndpoint--Password)"
+    },
+    "LoggingEndpoint:ExchangeName": {
+      "value": "enterprise-logging"
+    },
+    "LoggingEndpoint:ExchangeType": {
+      "value": "direct"
+    },
+    "LoggingEndpoint:RoutingKey": {
+      "value": "serilog-logging"
+    },
+    "InboundServiceBusConnection": {
+      "value": "@Microsoft.KeyVault(SecretUri=https://dev-ecomm-kv.vault.azure.net/secrets/OrdersAggregator--InboundServiceBusConnection)"
+    },
+    "InboundTopic": {
+      "value": "orderdynamics-shipment"
+    },
+    "InboundSubscriptionName": {
+      "value": "order-create"
+    },
+    "OrderDynamics:Authentication:Url": {
+      "value": "https://webservices.sandbox3.orderdynamics.net/AuthenticationService.svc"
+    },
+    "OrderDynamics:Authentication:StoreId": {
+      "value": "DBD1C5CE-5800-4D33-9653-93E52079D0AA"
+    },
+    "OrderDynamics:Authentication:AccessKey": {
+      "value": "@Microsoft.KeyVault(SecretUri=https://dev-ecomm-kv.vault.azure.net/secrets/OrdersAggregatorOD--AccessKey)"
+    },
+    "OrderDynamics:Order:Url": {
+      "value": "https://webservices.sandbox3.orderdynamics.net/RedWingShoes/RedWingShoesOrderService.svc"
+    },
+    "OutboundServiceBusConnection": {
+      "value": "@Microsoft.KeyVault(SecretUri=https://dev-ecomm-kv.vault.azure.net/secrets/OrdersAggregator--OutboundServiceBusConnection)"
+    },
+    "OutboundTopic": {
+      "value": "rws-orders-create-publish"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+﻿deployedBy = "App Dev"
+environment = "Development"
+applicationInsightsName = "Dev-Ecomm-AppIns"
+OutboundTopic = "rws-orders-create-publish"
+InboundSubscriptionName  = "order-create"
+InboundTopic = "orderdynamics-shipment"
+keyVaultName = ""

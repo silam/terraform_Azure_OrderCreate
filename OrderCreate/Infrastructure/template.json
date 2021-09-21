@@ -1,0 +1,537 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "type": "string",
+      "allowedValues": [
+        "Development",
+        "Test",
+        "Production"
+      ]
+    },
+    "deployedBy": {
+      "type": "string",
+      "metadata": {
+        "description": "Deployed By Tag. This value is defined as a variable in the Release Pipeline."
+      },
+      "defaultValue": "App Dev"
+    },
+    "functionAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "Function App Name - Orders Aggregator - OD"
+      }
+    },
+    "appServicePlan": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of App Service Plan."
+      },
+      "defaultValue": "[concat(parameters('functionAppName'), '-AppSP')]"
+    },
+    "storageName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Storage."
+      },
+      "defaultValue": "[concat(toLower(replace(parameters('functionAppName'), '-', '')), 'storage')]"
+    },
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Workspace Name."
+      }
+    },
+    "workspaceResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Workspace Resource Group."
+      }
+    },
+    "applicationInsightsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Application Insights."
+      }
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the KeyVault."
+      }
+    },
+    "LoggingEndpoint:ApplicationName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Application."
+      },
+      "defaultValue": "Orders_Aggregator_OD"
+    },
+    "LoggingEndpoint:LogToFile": {
+      "type": "bool",
+      "metadata": {
+        "description": "Log to File."
+      },
+      "defaultValue": false
+    },
+    "LoggingEndpoint:LogToAppInsights": {
+      "type": "bool",
+      "metadata": {
+        "description": "Log to Application Insights."
+      },
+      "defaultValue": true
+    },
+    "LoggingEndpoint:LogLevels:Default": {
+      "type": "string",
+      "metadata": {
+        "description": "Default Logging Level."
+      },
+      "defaultValue": "Debug"
+    },
+    "LoggingEndpoint:LogLevels:System": {
+      "type": "string",
+      "metadata": {
+        "description": "System Assemblies Logging Level."
+      },
+      "defaultValue": "Warning"
+    },
+    "LoggingEndpoint:LogLevels:Microsoft": {
+      "type": "string",
+      "metadata": {
+        "description": "Microsoft Assemblies Logging Level."
+      },
+      "defaultValue": "Warning"
+    },
+    "LoggingEndpoint:Host": {
+      "type": "string",
+      "metadata": {
+        "description": "Host Name of RabbitMQ."
+      }
+    },
+    "LoggingEndpoint:VirtualHost": {
+      "type": "string",
+      "metadata": {
+        "description": "VirtualHost Name of RabbitMQ."
+      }
+    },
+    "LoggingEndpoint:Port": {
+      "type": "string",
+      "metadata": {
+        "description": "Port of RabbitMQ."
+      }
+    },
+    "LoggingEndpoint:Username": {
+      "type": "string",
+      "metadata": {
+        "description": "Username of RabbitMQ."
+      }
+    },
+    "LoggingEndpoint:Password": {
+      "type": "string",
+      "metadata": {
+        "description": "Password of RabbitMQ."
+      }
+    },
+    "LoggingEndpoint:ExchangeName": {
+      "type": "string",
+      "metadata": {
+        "description": "Logging Exchange Name of RabbitMQ."
+      }
+    },
+    "LoggingEndpoint:ExchangeType": {
+      "type": "string",
+      "metadata": {
+        "description": "Exchange Type of logging exchange in RabbitMQ."
+      }
+    },
+    "LoggingEndpoint:RoutingKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Routing Key of logging exchange."
+      }
+    },
+    "InboundServiceBusConnection": {
+      "type": "string",
+      "metadata": {
+        "description": "Inbound ServiceBus Connection String."
+      }
+    },
+    "InboundTopic": {
+      "type": "string",
+      "metadata": {
+        "description": "ServiceBus (inbound) Topic Name."
+      }
+    },
+    "InboundSubscriptionName": {
+      "type": "string",
+      "metadata": {
+        "description": "Service Bus (inbound) Subscription Name."
+      }
+    },
+    "OrderDynamics:Authentication:Url": {
+      "type": "string",
+      "metadata": {
+        "description": "Order Dynamics Authentication Url."
+      }
+    },
+    "OrderDynamics:Authentication:StoreId": {
+      "type": "string",
+      "metadata": {
+        "description": "Order Dynamics Store Id."
+      }
+    },
+    "OrderDynamics:Authentication:AccessKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Order Dynamics Access Key."
+      }
+    },
+    "OrderDynamics:Order:Url": {
+      "type": "string",
+      "metadata": {
+        "description": "Order Dynamics Order Web Service Url."
+      }
+    },
+    "OutboundServiceBusConnection": {
+      "type": "string",
+      "metadata": {
+        "description": "Order Dynamics (outbound) Service Bus Connection String."
+      }
+    },
+    "OutboundTopic": {
+      "type": "string",
+      "metadata": {
+        "description": "Order Dynamics (outbound) Topic."
+      }
+    }
+  },
+  "variables": {
+    "ipSecurityRestrictions": [
+      {
+        "name": "ExpressRoute1",
+        "ipAddress": "65.148.40.232/30",
+        "action": "Allow",
+        "tag": "Default",
+        "priority": 110
+      },
+      {
+        "name": "ExpressRoute2",
+        "ipAddress": "65.148.40.236/30",
+        "action": "Allow",
+        "tag": "Default",
+        "priority": 111
+      },
+      {
+        "name": "Deny all",
+        "ipAddress": "Any",
+        "action": "Deny",
+        "priority": 2147483647
+      }
+    ]
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('functionAppName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "functionapp",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "tags": {
+        "Application Owner": "App Dev",
+        "Business Unit": "Ecommerce",
+        "Deployed By": "[parameters('deployedBy')]",
+        "Environment": "[parameters('environment')]",
+        "Infrastructure": "Function App",
+        "Project": "Ecommerce",
+        "Resource Owner": "App Dev",
+        "SLA Tier": "3.14"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlan'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageName'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlan'))]",
+        "httpsOnly": "true",
+        "clientAffinityEnabled": false,
+        "siteConfig": {
+          "use32BitWorkerProcess": false,
+          "httpLoggingEnabled": true,
+          "http20Enabled": true,
+          "minTlsVersion": "1.2",
+          "scmMinTlsVersion": "1.2",
+          "ftpsState": "Disabled",
+          "ipSecurityRestrictions": "[variables('ipSecurityRestrictions')]",
+          "scmIpSecurityRestrictions": [
+            {
+              "ipAddress": "Any",
+              "action": "Allow",
+              "priority": 1,
+              "name": "Allow all",
+              "description": "Allow all access"
+            }
+          ],
+          "scmIpSecurityRestrictionsUseMain": false,
+          "appSettings": [
+            {
+              "name": "AzureWebJobsDashboard",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName')),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName')),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName')),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(parameters('functionAppName'))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~3"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('microsoft.insights/components/', parameters('applicationInsightsName')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "dotnet"
+            },
+            {
+              "name": "ENVIRONMENT",
+              "value": "[parameters('environment')]",
+              "slotSetting": false
+            },
+            {
+              "name": "LoggingEndpoint:ApplicationName",
+              "value": "[parameters('LoggingEndpoint:ApplicationName')]",
+              "slotSetting": false
+            },
+            {
+              "name": "LoggingEndpoint:LogToFile",
+              "value": "[parameters('LoggingEndpoint:LogToFile')]",
+              "slotSetting": false
+            },
+            {
+              "name": "LoggingEndpoint:LogToAppInsights",
+              "value": "[parameters('LoggingEndpoint:LogToAppInsights')]",
+              "slotSetting": false
+            },
+            {
+              "name": "LoggingEndpoint:LogLevels:Default",
+              "value": "[parameters('LoggingEndpoint:LogLevels:Default')]",
+              "slotSetting": false
+            },
+            {
+              "name": "LoggingEndpoint:LogLevels:System",
+              "value": "[parameters('LoggingEndpoint:LogLevels:System')]",
+              "slotSetting": false
+            },
+            {
+              "name": "LoggingEndpoint:LogLevels:Microsoft",
+              "value": "[parameters('LoggingEndpoint:LogLevels:Microsoft')]",
+              "slotSetting": false
+            },
+            {
+              "name": "LoggingEndpoint:Host",
+              "value": "[parameters('LoggingEndpoint:Host')]",
+              "slotSetting": false
+            },
+            {
+              "name": "LoggingEndpoint:VirtualHost",
+              "value": "[parameters('LoggingEndpoint:VirtualHost')]",
+              "slotSetting": false
+            },
+            {
+              "name": "LoggingEndpoint:Port",
+              "value": "[parameters('LoggingEndpoint:Port')]",
+              "slotSetting": false
+            },
+            {
+              "name": "LoggingEndpoint:Username",
+              "value": "[parameters('LoggingEndpoint:Username')]",
+              "slotSetting": false
+            },
+            {
+              "name": "LoggingEndpoint:Password",
+              "value": "[parameters('LoggingEndpoint:Password')]",
+              "slotSetting": false
+            },
+            {
+              "name": "LoggingEndpoint:ExchangeName",
+              "value": "[parameters('LoggingEndpoint:ExchangeName')]",
+              "slotSetting": false
+            },
+            {
+              "name": "LoggingEndpoint:ExchangeType",
+              "value": "[parameters('LoggingEndpoint:ExchangeType')]",
+              "slotSetting": false
+            },
+            {
+              "name": "LoggingEndpoint:RoutingKey",
+              "value": "[parameters('LoggingEndpoint:RoutingKey')]",
+              "slotSetting": false
+            },
+            {
+              "name": "InboundServiceBusConnection",
+              "value": "[parameters('InboundServiceBusConnection')]",
+              "slotSetting": false
+            },
+            {
+              "name": "InboundTopic",
+              "value": "[parameters('InboundTopic')]",
+              "slotSetting": false
+            },
+            {
+              "name": "InboundSubscriptionName",
+              "value": "[parameters('InboundSubscriptionName')]",
+              "slotSetting": false
+            },
+            {
+              "name": "OrderDynamics:Authentication:Url",
+              "value": "[parameters('OrderDynamics:Authentication:Url')]",
+              "slotSetting": false
+            },
+            {
+              "name": "OrderDynamics:Authentication:StoreId",
+              "value": "[parameters('OrderDynamics:Authentication:StoreId')]",
+              "slotSetting": false
+            },
+            {
+              "name": "OrderDynamics:Authentication:AccessKey",
+              "value": "[parameters('OrderDynamics:Authentication:AccessKey')]",
+              "slotSetting": false
+            },
+            {
+              "name": "OrderDynamics:Order:Url",
+              "value": "[parameters('OrderDynamics:Order:Url')]",
+              "slotSetting": false
+            },
+            {
+              "name": "OutboundServiceBusConnection",
+              "value": "[parameters('OutboundServiceBusConnection')]",
+              "slotSetting": false
+            },
+            {
+              "name": "OutboundTopic",
+              "value": "[parameters('OutboundTopic')]",
+              "slotSetting": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('appServicePlan')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic",
+        "size": "Y1",
+        "family": "Y",
+        "capacity": 0
+      },
+      "kind": "functionapp",
+      "properties": {
+        "perSiteScaling": false,
+        "maximumElasticWorkerCount": 1,
+        "isSpot": false,
+        "reserved": false,
+        "isXenon": false,
+        "hyperV": false,
+        "targetWorkerCount": 0,
+        "targetWorkerSizeId": 0
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[parameters('storageName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "properties": {
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "virtualNetworkRules": [],
+          "ipRules": [],
+          "defaultAction": "Allow"
+        },
+        "supportsHttpsTrafficOnly": true,
+        "encryption": {
+          "services": {
+            "file": {
+              "keyType": "Account",
+              "enabled": true
+            },
+            "blob": {
+              "keyType": "Account",
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/accessPolicies",
+      "apiVersion": "2018-02-14",
+      "name": "[concat(parameters('keyVaultName'), '/add')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]"
+      ],
+      "properties": {
+        "accessPolicies": [
+          {
+            "tenantId": "[subscription().tenantid]",
+            "objectId": "[reference(concat('Microsoft.Web/sites/', parameters('functionAppName')), '2019-08-01', 'Full').identity.principalId]",
+            "permissions": {
+              "secrets": [
+                "List",
+                "Get"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites/providers/diagnosticSettings",
+      "apiVersion": "2017-05-01-preview",
+      "name": "[concat(parameters('functionAppName'), '/Microsoft.Insights/', parameters('functionAppName'),'-Diag')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]"
+      ],
+      "properties": {
+        "workspaceId": "[resourceId(parameters('workspaceResourceGroup'),'Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]",
+        "logs": [
+          {
+            "category": "FunctionAppLogs",
+            "enabled": true
+          }
+        ],
+        "metrics": [
+          {
+            "category": "AllMetrics",
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {}
+}
